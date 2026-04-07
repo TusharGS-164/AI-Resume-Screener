@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Sparkles, ArrowRight } from 'lucide-react'
+import logo from '../assets/resume-logo.png'
 
 const inputStyle = {
   width: '100%',
@@ -85,14 +86,11 @@ export default function LoginPage() {
           {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: '2.5rem' }}>
             <div style={{
-              width: 36, height: 36, borderRadius: 8,
-              background: 'linear-gradient(135deg, var(--gold), var(--gold-light))',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 2px 14px rgba(201,169,110,0.3)',
+               width: 36, height: 36, borderRadius: 8, background: 'linear-gradient(135deg, var(--gold), var(--gold-light))', display: 'flex', alignItems: 'center',marginLeft:'0px',justifyContent: 'center', boxShadow: '0 2px 14px rgba(201,169,110,0.3)' ,marginRight:'25px',paddingLeft:'20px'
             }}>
-              <Sparkles size={16} color="#0e0e0f" strokeWidth={2.5} />
+              <img src={logo} alt="logo" height={60}  />
             </div>
-            <span style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--text)' }}>ResumeAI</span>
+            <span style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--text)' }}>HireSense</span>
           </div>
 
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, color: 'var(--text)', marginBottom: 6 }}>Welcome back</h1>
