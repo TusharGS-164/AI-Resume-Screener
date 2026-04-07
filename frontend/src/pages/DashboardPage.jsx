@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../api'
 import { useAuth } from '../context/AuthContext'
 import { ScanSearch, Trash2, ArrowUpRight, Users, FileStack, TrendingUp, Clock } from 'lucide-react'
 
@@ -45,16 +45,21 @@ export default function DashboardPage() {
   const [sessions, setSessions] = useState([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    axios.get('/api/screen/sessions').then(r => setSessions(r.data)).finally(() => setLoading(false))
-  }, [])
+useEffect(() => {
+  api.get('/api/screen/sessions')
+    .then(r => setSessions(r.data))
+    .finally(() => setLoading(false))
+}, [])
 
   const deleteSession = async (id, e) => {
-    e.stopPropagation()
-    if (!confirm('Delete this screening session and all its data?')) return
-    await axios.delete(`/api/screen/sessions/${id}`)
-    setSessions(s => s.filter(x => x.id !== id))
-  }
+  e.stopPropagation()
+
+  if (!confirm('Delete this screening session and all its data?')) return
+
+  await api.delete(`/api/screen/sessions/${id}`)
+
+  setSessions(s => s.filter(x => x.id !== id))
+}
 
   const totalCandidates = sessions.reduce((a, s) => a + s.candidate_count, 0)
   const avgScore = sessions.length ? Math.round(sessions.reduce((a, s) => a + s.top_score, 0) / sessions.length) : 0

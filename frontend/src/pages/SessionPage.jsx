@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import api from '../api'
 import {
   ArrowLeft, Download, Star, CheckCircle, XCircle, HelpCircle, AlertCircle,
   ChevronDown, ChevronUp, Search, SlidersHorizontal, EyeOff, Eye,
@@ -146,12 +146,18 @@ function CandidateCard({ candidate: initial, rank, blindMode, onStageChange }) {
     const updated = { ...candidate, stage }
     setCandidate(updated)
     onStageChange(candidate.id, stage)
-    await axios.patch(`/api/screen/candidates/${candidate.id}`, { stage, recruiter_notes: notes })
+    await api.patch(`/api/screen/candidates/${candidate.id}`, {
+  stage,
+  recruiter_notes: notes
+});
   }
 
   const saveNotes = async () => {
     setSaving(true)
-    await axios.patch(`/api/screen/candidates/${candidate.id}`, { stage: candidate.stage, recruiter_notes: notes })
+    await api.patch(`/api/screen/candidates/${candidate.id}`, {
+  stage: candidate.stage,
+  recruiter_notes: notes
+});
     setCandidate(c => ({ ...c, recruiter_notes: notes }))
     setSaving(false)
     setNotesOpen(false)
@@ -360,7 +366,9 @@ export default function SessionPage() {
       if (maxExp) params.append('max_exp', maxExp)
       if (hideDupes) params.append('hide_duplicates', 'true')
       if (blindMode) params.append('blind_mode', 'true')
-      const res = await axios.get(`/api/screen/sessions/${id}?${params}`)
+     const res = await api.get(`/api/screen/sessions/${id}`, {
+  params: params
+});
       const data = res.data
       data.candidates = data.candidates.map(c => ({ ...c, recommendation: normalizeRec(c.recommendation) }))
       setSession(data)
@@ -378,7 +386,10 @@ export default function SessionPage() {
   }
 
   const exportFile = async type => {
-    const res = await axios.get(`/api/screen/sessions/${id}/export/${type}`, { responseType: 'blob' })
+    const res = await api.get(
+  `/api/screen/sessions/${id}/export/${type}`,
+  { responseType: 'blob' }
+);
     const url = URL.createObjectURL(res.data)
     const a = document.createElement('a'); a.href = url; a.download = `screening_${id}.${type}`; a.click()
     URL.revokeObjectURL(url)

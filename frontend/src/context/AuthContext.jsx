@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../api'   
 
 const AuthContext = createContext(null)
 
@@ -10,10 +10,12 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const token = localStorage.getItem('token')
     const savedUser = localStorage.getItem('user')
+
     if (token && savedUser) {
       setUser(JSON.parse(savedUser))
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`
     }
+
     setLoading(false)
   }, [])
 
@@ -21,24 +23,31 @@ export function AuthProvider({ children }) {
     const form = new URLSearchParams()
     form.append('username', email)
     form.append('password', password)
-    const res = await axios.post('/api/auth/login', form)
+
+    const res = await api.post('/api/auth/login', form)
+
     const { access_token, user: userData } = res.data
+
     localStorage.setItem('token', access_token)
     localStorage.setItem('user', JSON.stringify(userData))
-    axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`
+
+    api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`
+
     setUser(userData)
     return userData
   }
 
   const register = async (email, name, password) => {
-    await axios.post('/api/auth/register', { email, name, password })
+    await api.post('/api/auth/register', { email, name, password })
     return login(email, password)
   }
 
   const logout = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
-    delete axios.defaults.headers.common['Authorization']
+
+    delete api.defaults.headers.common['Authorization']
+
     setUser(null)
   }
 

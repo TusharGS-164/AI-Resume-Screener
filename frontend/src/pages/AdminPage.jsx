@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import api from '../api' 
 import { ShieldCheck, Users, FileStack, BarChart2, TrendingUp } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 
@@ -41,7 +41,10 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([axios.get('/api/admin/stats'), axios.get('/api/admin/users')])
+   Promise.all([
+  api.get('/api/admin/stats'),
+  api.get('/api/admin/users')
+])
       .then(([s, u]) => { setStats(s.data); setUsers(u.data) })
       .finally(() => setLoading(false))
   }, [])
