@@ -1,12 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import api from '../api'
+// import axios from 'axios'
 import {
   ArrowLeft, Download, Star, CheckCircle, XCircle, HelpCircle, AlertCircle,
   ChevronDown, ChevronUp, Search, SlidersHorizontal, EyeOff, Eye,
   Copy, Filter, X, FileText, Phone, Mail, MapPin, Briefcase, GraduationCap,
   Flag, Sparkles, CheckSquare, Clock, UserCheck, UserX, Trophy, StickyNote
 } from 'lucide-react'
+import API from "../api";
+
 
 function normalizeRec(rec) {
   if (!rec) return 'Maybe'
@@ -27,7 +29,7 @@ const REC_META = {
 
 const STAGE_META = {
   new:         { label: 'New',         icon: Clock,      color: 'var(--text-3)',  bg: 'var(--bg-4)',      border: 'var(--border)' },
-  reviewed:    { label: 'Reviewed',    icon: Eye,        color: 'var(--blue)',    bg: 'var(--blue-bg)',   border: 'var(--blue-border)' },
+  reviewed:    { label: 'reviewed',    icon: Eye,        color: 'var(--blue)',    bg: 'var(--blue-bg)',   border: 'var(--blue-border)' },
   shortlisted: { label: 'Shortlisted', icon: CheckSquare,color: 'var(--green)',   bg: 'var(--green-bg)',  border: 'var(--green-border)' },
   rejected:    { label: 'Rejected',    icon: UserX,      color: 'var(--red)',     bg: 'var(--red-bg)',    border: 'var(--red-border)' },
   hired:       { label: 'Hired',       icon: Trophy,     color: 'var(--gold)',    bg: 'var(--gold-dim)',  border: 'rgba(201,169,110,0.3)' },
@@ -55,7 +57,7 @@ function RecBadge({ rec }) {
   const m = REC_META[rec] || { icon: AlertCircle, color: 'var(--text-2)', bg: 'var(--bg-3)', border: 'var(--border-2)' }
   const Icon = m.icon
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, padding: '2px 9px', borderRadius: 99, background: m.bg, color: m.color, fontWeight: 500, border: `1px solid ${m.border}` }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, padding: '4px 9px', borderRadius: 99, background: m.bg, color: m.color, fontWeight: 500, border: `1px solid ${m.border}` }}>
       <Icon size={10} />{rec}
     </span>
   )
@@ -65,7 +67,7 @@ function StageBadge({ stage }) {
   const m = STAGE_META[stage] || STAGE_META.new
   const Icon = m.icon
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, padding: '2px 9px', borderRadius: 99, background: m.bg, color: m.color, fontWeight: 500, border: `1px solid ${m.border}` }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, padding: '4px 9px', borderRadius: 99, background: m.bg, color: m.color, fontWeight: 500, border: `1px solid ${m.border}` }}>
       <Icon size={10} />{m.label}
     </span>
   )
@@ -126,7 +128,7 @@ function SkillTag({ label, match }) {
 function InfoChip({ icon: Icon, value }) {
   if (!value) return null
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: 'var(--text-3)', background: 'var(--bg-3)', padding: '2px 8px', borderRadius: 99, border: '1px solid var(--border)' }}>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: 'var(--text-3)', background: 'var(--bg-3)', padding: '4px 8px', borderRadius: 99, border: '1px solid var(--border)' }}>
       <Icon size={10} />{value}
     </span>
   )
@@ -142,33 +144,36 @@ function CandidateCard({ candidate: initial, rank, blindMode, onStageChange }) {
 
   useEffect(() => { setCandidate(initial); setNotes(initial.recruiter_notes || '') }, [initial])
 
-  const updateStage = async (stage) => {
-    const updated = { ...candidate, stage }
-    setCandidate(updated)
-    onStageChange(candidate.id, stage)
-    await api.patch(`/api/screen/candidates/${candidate.id}`, {
-  stage,
-  recruiter_notes: notes
-});
-  }
+ const updateStage = async (stage) => {
+  const updated = { ...candidate, stage };
+  setCandidate(updated);
+  onStageChange(candidate.id, stage);
 
-  const saveNotes = async () => {
-    setSaving(true)
-    await api.patch(`/api/screen/candidates/${candidate.id}`, {
-  stage: candidate.stage,
-  recruiter_notes: notes
-});
-    setCandidate(c => ({ ...c, recruiter_notes: notes }))
-    setSaving(false)
-    setNotesOpen(false)
-  }
+  await API.patch(`/api/screen/candidates/${candidate.id}`, {
+    stage,
+    recruiter_notes: notes,
+  });
+};
+
+const saveNotes = async () => {
+  setSaving(true);
+
+  await API.patch(`/api/screen/candidates/${candidate.id}`, {
+    stage: candidate.stage,
+    recruiter_notes: notes,
+  });
+
+  setCandidate((c) => ({ ...c, recruiter_notes: notes }));
+  setSaving(false);
+  setNotesOpen(false);
+};
 
   const displayName = blindMode ? `Candidate #${candidate.id}` : (candidate.name || candidate.filename)
 
   return (
     <div className="animate-up" style={{
       background: 'var(--surface)', border: `1px solid ${candidate.is_duplicate ? 'rgba(212,146,74,0.25)' : rank === 0 ? 'rgba(76,175,130,0.2)' : 'var(--border)'}`,
-      borderRadius: 'var(--radius-xl)', overflow: 'hidden', opacity: candidate.stage === 'rejected' ? 0.65 : 1,
+      borderRadius: 'var(--radius-xl)', overflow: 'visible', opacity: candidate.stage === 'rejected' ? 0.65 : 1,
       animationDelay: `${Math.min(rank * 0.04, 0.4)}s`,
     }}>
       {/* Duplicate warning banner */}
@@ -185,13 +190,34 @@ function CandidateCard({ candidate: initial, rank, blindMode, onStageChange }) {
         onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-3)'}
         onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
       >
-        <div style={{ fontSize: 12, color: 'var(--text-3)', fontWeight: 500, minWidth: 22, textAlign: 'center' }}>
-          {rank === 0 ? <span style={{ color: 'var(--gold)' }}>★</span> : `#${rank + 1}`}
+      <input
+  type="checkbox"
+  onClick={e => e.stopPropagation()}
+  style={{
+    accentColor: 'var(--gold)',
+    cursor: 'pointer',
+    transform: 'scale(1.1)'
+  }}
+/>
+
+        <div style={{ fontSize: 16, color: 'var(--text-3)', fontWeight: 500, minWidth: 22, textAlign: 'center' }}>
+          {rank === 0 ? <span style={{
+  color:
+    rank === 0 ? '#22c55e' :
+    rank === 1 ? '#5b9bd5' :
+    rank === 2 ? '#d4924a' :
+    'var(--text-3)',
+  fontWeight: 600
+}}>
+  #{rank + 1}
+</span>: `#${rank + 1}`}
         </div>
         <ScoreRing score={candidate.score} />
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 500, fontSize: 14, color: 'var(--text)', marginBottom: 5 }}>{displayName}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+          <div style={{ fontWeight: 500, fontSize: 16, color: 'var(--text)', marginBottom: 5 }}>{displayName}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap',padding : '10px'
+
+           }}>
             <RecBadge rec={rec} />
             <StageBadge stage={candidate.stage} />
             {candidate.experience && <span style={{ fontSize: 11, color: 'var(--text-3)' }}>{candidate.experience}</span>}
@@ -231,25 +257,25 @@ function CandidateCard({ candidate: initial, rank, blindMode, onStageChange }) {
               <span>Match score</span>
               <span style={{ color: candidate.score >= 65 ? 'var(--green)' : 'var(--text-2)', fontWeight: 500 }}>{Math.round(candidate.score)}/100</span>
             </div>
-            <div style={{ height: 3, background: 'var(--bg-4)', borderRadius: 99, overflow: 'hidden' }}>
+            <div style={{ height: 3, background: 'var(--bg-4)', borderRadius: 99, overflow: 'visible' }}>
               <div style={{ height: '100%', borderRadius: 99, width: `${candidate.score}%`, background: candidate.score >= 80 ? 'var(--green)' : candidate.score >= 60 ? 'var(--blue)' : candidate.score >= 40 ? 'var(--amber)' : 'var(--red)', transition: 'width 1s cubic-bezier(0.22,1,0.36,1)' }} />
             </div>
           </div>
 
           {/* Two column: summary + strengths/flags */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: 16 }}>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>Summary</div>
-              <p style={{ fontSize: 12, color: 'var(--text-2)', lineHeight: 1.7 }}>
+              <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>Summary</div>
+              <p style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.7 }}>
                 {blindMode ? candidate.blind_summary || candidate.summary : candidate.summary}
               </p>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {candidate.strengths?.length > 0 && (
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--green)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Strengths</div>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--green)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Strengths</div>
                   {candidate.strengths.map((s, i) => (
-                    <div key={i} style={{ fontSize: 12, color: 'var(--text-2)', display: 'flex', gap: 6, marginBottom: 3 }}>
+                    <div key={i} style={{ fontSize: 14, color: 'var(--text-2)', display: 'flex', gap: 6, marginBottom: 3 }}>
                       <span style={{ color: 'var(--green)', flexShrink: 0 }}>+</span>{s}
                     </div>
                   ))}
@@ -257,11 +283,11 @@ function CandidateCard({ candidate: initial, rank, blindMode, onStageChange }) {
               )}
               {candidate.red_flags?.length > 0 && (
                 <div>
-                  <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--amber)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--amber)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5, display: 'flex', alignItems: 'center', gap: 4 }}>
                     <Flag size={10} />Gaps
                   </div>
                   {candidate.red_flags.map((f, i) => (
-                    <div key={i} style={{ fontSize: 12, color: 'var(--text-2)', display: 'flex', gap: 6, marginBottom: 3 }}>
+                    <div key={i} style={{ fontSize: 14, color: 'var(--text-2)', display: 'flex', gap: 6, marginBottom: 3 }}>
                       <span style={{ color: 'var(--amber)', flexShrink: 0 }}>−</span>{f}
                     </div>
                   ))}
@@ -274,9 +300,9 @@ function CandidateCard({ candidate: initial, rank, blindMode, onStageChange }) {
           {candidate.skills?.length > 0 && (
             <div>
               <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 7 }}>
-                <div style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Skills</div>
+                <div style={{ fontSize: 12, fontWeight: 500, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Skills</div>
                 {candidate.missing_skills?.length > 0 && (
-                  <span style={{ fontSize: 11, color: 'var(--red)', background: 'var(--red-bg)', padding: '1px 7px', borderRadius: 99, border: '1px solid var(--red-border)' }}>
+                  <span style={{ fontSize: 12, color: 'var(--red)', background: 'var(--red-bg)', padding: '1px 7px', borderRadius: 99, border: '1px solid var(--red-border)' }}>
                     {candidate.missing_skills.length} missing
                   </span>
                 )}
@@ -289,7 +315,7 @@ function CandidateCard({ candidate: initial, rank, blindMode, onStageChange }) {
               {candidate.missing_skills?.length > 0 && (
                 <div style={{ marginTop: 8, display: 'flex', flexWrap: 'wrap', gap: 5 }}>
                   {candidate.missing_skills.map(s => (
-                    <span key={s} style={{ fontSize: 11, padding: '3px 9px', borderRadius: 99, background: 'var(--red-bg)', color: 'var(--red)', border: '1px solid var(--red-border)' }}>−{s}</span>
+                    <span key={s} style={{ fontSize: 12, padding: '3px 9px', borderRadius: 99, background: 'var(--red-bg)', color: 'var(--red)', border: '1px solid var(--red-border)' }}>−{s}</span>
                   ))}
                 </div>
               )}
@@ -340,6 +366,8 @@ export default function SessionPage() {
   const navigate = useNavigate()
   const [session, setSession] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [sortBy, setSortBy] = useState('score')
+
 
   // Filter state
   const [search, setSearch] = useState('')
@@ -352,6 +380,7 @@ export default function SessionPage() {
   const [hideDupes, setHideDupes] = useState(false)
   const [blindMode, setBlindMode] = useState(false)
   const [showFilters, setShowFilters] = useState(false)
+  const [showJD, setShowJD] = useState(false)
   const [activeFilter, setActiveFilter] = useState('All') // rec quick filter
 
   const fetchSession = useCallback(async () => {
@@ -366,11 +395,9 @@ export default function SessionPage() {
       if (maxExp) params.append('max_exp', maxExp)
       if (hideDupes) params.append('hide_duplicates', 'true')
       if (blindMode) params.append('blind_mode', 'true')
-     const res = await api.get(`/api/screen/sessions/${id}`, {
-  params: params
-});
-      const data = res.data
-      data.candidates = data.candidates.map(c => ({ ...c, recommendation: normalizeRec(c.recommendation) }))
+const res = await API.get(`/api/screen/sessions/${id}?${params}`);
+            const data = res.data
+ data.candidates = data.candidates.map(c => ({ ...c, recommendation: normalizeRec(c.recommendation) }))
       setSession(data)
     } catch { navigate('/dashboard') }
     setLoading(false)
@@ -386,10 +413,7 @@ export default function SessionPage() {
   }
 
   const exportFile = async type => {
-    const res = await api.get(
-  `/api/screen/sessions/${id}/export/${type}`,
-  { responseType: 'blob' }
-);
+    const res = await API.get(`/api/screen/sessions/${id}/export/${type}`, { responseType: 'blob' })
     const url = URL.createObjectURL(res.data)
     const a = document.createElement('a'); a.href = url; a.download = `screening_${id}.${type}`; a.click()
     URL.revokeObjectURL(url)
@@ -403,23 +427,46 @@ export default function SessionPage() {
 
   const hasActiveFilters = search || recFilter !== 'All' || stageFilter !== 'all' || minScore || maxScore || minExp || maxExp || hideDupes
 
-  if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-3)', gap: 10 }}>
-      <div style={{ width: 20, height: 20, border: '2px solid var(--border-2)', borderTopColor: 'var(--gold)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-      Analyzing candidates...
-    </div>
-  )
+ if (loading) return (
+  <div style={{ padding: '2rem' }}>
+    {[1,2,3,4,5].map(i => (
+      <div key={i} style={{
+        height: 80,
+        background: 'var(--surface)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-lg)',
+        marginBottom: 10,
+        opacity: 0.6
+      }} />
+    ))} Analyzing Candidates
+  </div>
+)
   if (!session) return null
 
   const { rec_counts = {}, stage_counts = {}, duplicate_count = 0, total_count = 0, filtered_count = 0 } = session
 
-  const inputCls = { background: 'var(--bg-3)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius)', color: 'var(--text)', fontSize: 13, padding: '7px 10px', outline: 'none' }
+  const inputCls = { background: 'var(--bg-3)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius)', color: 'var(--text)', fontSize: 14, padding: '7px 10px', outline: 'none' }
+
+  const sortedCandidates = [...session.candidates].sort((a, b) => {
+  if (sortBy === 'score') return b.score - a.score
+  if (sortBy === 'experience') return (b.experience_years || 0) - (a.experience_years || 0)
+  if (sortBy === 'stage') return a.stage.localeCompare(b.stage)
+  if (sortBy === 'name') return (a.name || '').localeCompare(b.name || '')
+  return 0
+})
 
   return (
-    <div style={{ padding: '1.75rem 2rem', maxWidth: 1060, margin: '0 auto' }}>
+    <div style={{ padding: '1.75rem 2.5rem', minWidth: 1100, margin: '0 auto', position : 'relative',overflow: 'visible' }}>
       {/* Header */}
-      <div className="animate-up" style={{ marginBottom: '1.5rem' }}>
-        <button onClick={() => navigate('/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-3)', border: 'none', background: 'none', cursor: 'pointer', fontSize: 12, marginBottom: 10, padding: 0 }}
+      <div className="animate-up"  style={{
+  position: 'sticky',
+  top: 0,
+  zIndex: 30,
+  background: 'var(--bg)',
+  paddingTop: 10,
+  paddingBottom: 10
+}}>
+        <button onClick={() => navigate('/dashboard')} style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--text-3)', border: 'none', background: 'none', cursor: 'pointer', fontSize: 14, marginBottom: 10, padding: 0 }}
           onMouseEnter={e => e.currentTarget.style.color = 'var(--text-2)'}
           onMouseLeave={e => e.currentTarget.style.color = 'var(--text-3)'}
         >
@@ -433,7 +480,8 @@ export default function SessionPage() {
               {duplicate_count > 0 && <span style={{ color: 'var(--amber)', marginLeft: 8 }}>· {duplicate_count} duplicate{duplicate_count > 1 ? 's' : ''} found</span>}
             </p>
           </div>
-          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
+  <span style={{ fontSize: 14, color: 'var(--text-3)' }}>Actions:</span>
             <button
               onClick={() => setBlindMode(b => !b)}
               style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', border: `1px solid ${blindMode ? 'rgba(201,169,110,0.4)' : 'var(--border-2)'}`, borderRadius: 'var(--radius)', background: blindMode ? 'var(--gold-dim)' : 'var(--surface)', fontSize: 12, fontWeight: 500, cursor: 'pointer', color: blindMode ? 'var(--gold-light)' : 'var(--text-2)', transition: 'all 0.15s' }}
@@ -464,18 +512,18 @@ export default function SessionPage() {
       )}
 
       {/* Rec stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: '1.25rem' }} className="animate-up">
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: '1.25rem' ,minHeight:100}} className="animate-up">
         {['Strong Yes', 'Yes', 'Maybe', 'No'].map(rec => {
           const m = REC_META[rec]; const Icon = m.icon; const isActive = activeFilter === rec
           return (
             <button key={rec} onClick={() => { const next = isActive ? 'All' : rec; setActiveFilter(next); setRecFilter(next) }}
-              style={{ background: isActive ? m.bg : 'var(--surface)', border: `1px solid ${isActive ? m.border : 'var(--border)'}`, borderRadius: 'var(--radius-lg)', padding: '12px 14px', cursor: 'pointer', textAlign: 'left', outline: 'none', transition: 'all 0.18s', position: 'relative', overflow: 'hidden' }}
+              style={{ background: isActive ? m.bg : 'var(--surface)', border: `1px solid ${isActive ? m.border : 'var(--border)'}`, borderRadius: 'var(--radius-lg)', padding: '12px 14px', cursor: 'pointer', textAlign: 'left', outline: 'none', transition: 'all 0.18s', position: 'relative', overflow: 'visible' }}
               onMouseEnter={e => { if (!isActive) { e.currentTarget.style.borderColor = m.border; e.currentTarget.style.background = m.bg + '55' }}}
               onMouseLeave={e => { if (!isActive) { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.background = 'var(--surface)' }}}
             >
               {isActive && <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: m.color }} />}
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, color: isActive ? m.color : 'var(--text)', lineHeight: 1, marginBottom: 5 }}>{rec_counts[rec] ?? 0}</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, color: isActive ? m.color : 'var(--text-3)', fontWeight: 500 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 14, color: isActive ? m.color : 'var(--text-3)', fontWeight: 500 }}>
                 <Icon size={11} />{rec}
               </div>
             </button>
@@ -484,7 +532,7 @@ export default function SessionPage() {
       </div>
 
       {/* Stage pipeline */}
-      <div className="animate-up" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8, marginBottom: '1.25rem' }}>
+      <div className="animate-up" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 14, marginBottom: '1.25rem',minHeight:100 }}>
         {Object.entries(STAGE_META).map(([key, meta]) => {
           const Icon = meta.icon; const count = stage_counts[key] ?? 0; const isActive = stageFilter === key
           return (
@@ -493,17 +541,28 @@ export default function SessionPage() {
             >
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                 <Icon size={13} color={isActive ? meta.color : 'var(--text-3)'} />
-                <span style={{ fontFamily: 'var(--font-display)', fontSize: 18, color: isActive ? meta.color : 'var(--text)' }}>{count}</span>
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: 28, color: isActive ? meta.color : 'var(--text)' }}>{count}</span>
               </div>
-              <div style={{ fontSize: 11, color: isActive ? meta.color : 'var(--text-3)', fontWeight: 500 }}>{meta.label}</div>
+              <div style={{ fontSize: 14, color: isActive ? meta.color : 'var(--text-3)', fontWeight: 500 }}>{meta.label}</div>
             </button>
           )
         })}
       </div>
 
       {/* Search + filter bar */}
-      <div className="animate-up" style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '12px 14px', marginBottom: '1.25rem' }}>
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+      <div className="animate-up" style={{
+    background: 'var(--surface)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius-lg)',
+    padding: '16px 14px',
+    marginBottom: '1.25rem',
+    position: 'sticky',
+    top: 10,
+    zIndex: 20,
+    minHeight:50,
+    backdropFilter: 'blur(6px)'
+  }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'center',minHeight:50 }}>
           <div style={{ position: 'relative', flex: 1 }}>
             <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)' }} />
             <input
@@ -519,6 +578,23 @@ export default function SessionPage() {
           >
             <SlidersHorizontal size={13} /> Filters {hasActiveFilters && <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--gold)', display: 'inline-block' }} />}
           </button>
+          <select
+  value={sortBy}
+  onChange={e => setSortBy(e.target.value)}
+  style={{
+    background: 'var(--bg-3)',
+    border: '1px solid var(--border-2)',
+    borderRadius: 'var(--radius)',
+    color: 'var(--text)',
+    fontSize: 12,
+    padding: '7px 10px'
+  }}
+>
+  <option value="score">Sort by Score</option>
+  <option value="experience">Sort by Experience</option>
+  <option value="stage">Sort by Stage</option>
+  <option value="name">Sort by Name</option>
+</select>
           <button onClick={() => setHideDupes(d => !d)}
             style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 12px', border: `1px solid ${hideDupes ? 'var(--amber-border)' : 'var(--border-2)'}`, borderRadius: 'var(--radius)', background: hideDupes ? 'var(--amber-bg)' : 'var(--bg-3)', fontSize: 12, color: hideDupes ? 'var(--amber)' : 'var(--text-3)', cursor: 'pointer', fontWeight: hideDupes ? 500 : 400 }}
             title="Hide duplicate resumes"
@@ -558,19 +634,71 @@ export default function SessionPage() {
 
       {/* Results summary + JD */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem' }} className="animate-up">
-        <div style={{ fontSize: 13, color: 'var(--text-3)' }}>
-          Showing <span style={{ color: 'var(--text)', fontWeight: 500 }}>{filtered_count}</span> of {total_count} candidates
+        <div style={{ fontSize: 14, color: 'var(--text-3)' }}>
+          Showing <span style={{ color: 'var(--text)', fontWeight: 500 }}>{filtered_count}</span>  of  { total_count} candidates
         </div>
-        <details>
-          <summary style={{ cursor: 'pointer', fontSize: 12, color: 'var(--text-3)', userSelect: 'none', listStyle: 'none', display: 'flex', alignItems: 'center', gap: 5 }}>
-            <FileText size={12} /> View job description
-          </summary>
-          <div style={{ position: 'absolute', right: '2rem', marginTop: 8, maxWidth: 480, padding: '14px', background: 'var(--surface-2)', border: '1px solid var(--border-2)', borderRadius: 'var(--radius-lg)', fontSize: 12, color: 'var(--text-2)', lineHeight: 1.75, whiteSpace: 'pre-wrap', maxHeight: 250, overflowY: 'auto', zIndex: 50, boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
-            {session.job_description}
-          </div>
-        </details>
-      </div>
+        <div style={{ position: 'relative' }}>
+  <button
+    onClick={() => setShowJD(v => !v)}
+    style={{
+      cursor: 'pointer',
+      fontSize: 13,
+      color: 'var(--text-3)',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 5,
+      background: 'none',
+      border: 'none'
+    }}
+  >
+    <FileText size={12} /> View job description
+  </button>
 
+  {showJD && (
+    <div
+      style={{
+        position: 'absolute',
+        right: 0,
+        top: '120%',
+        width: 480,
+        padding: '14px',
+        background: 'var(--surface-2)',
+        border: '1px solid var(--border-2)',
+        borderRadius: 'var(--radius-lg)',
+        fontSize: 13,
+        color: 'var(--text-2)',
+        lineHeight: 1.75,
+        whiteSpace: 'pre-wrap',
+        maxHeight: 250,
+        overflowY: 'auto',
+        zIndex: 9999,
+        boxShadow: '0 8px 32px rgba(0,0,0,0.4)'
+      }}
+    >
+      {session.job_description}
+    </div>
+  )}
+</div>
+</div>
+
+          <div style={{
+  display: 'flex',
+  gap: 14,
+  marginBottom: '1rem',
+  fontSize: 14,
+  color: 'var(--text-3)',
+  padding: '12px 12px',
+  minHeight:50,
+  background: 'var(--surface)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius-lg)'
+}}>
+  <span>New: {stage_counts.new || 0}</span>
+  <span>Reviewed: {stage_counts.reviewed || 0}</span>
+  <span>Shortlisted: {stage_counts.shortlisted || 0}</span>
+  <span>Rejected: {stage_counts.rejected || 0}</span>
+  <span>Hired: {stage_counts.hired || 0}</span>
+</div>
       {/* Candidate cards */}
       {session.candidates.length === 0 ? (
         <div style={{ padding: '4rem', textAlign: 'center', background: 'var(--surface)', borderRadius: 'var(--radius-xl)', border: '1px solid var(--border)' }}>
@@ -582,7 +710,7 @@ export default function SessionPage() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {session.candidates.map((c, i) => (
+          {sortedCandidates.map((c, i) => (
             <CandidateCard key={c.id} candidate={c} rank={i} blindMode={blindMode} onStageChange={handleStageChange} />
           ))}
         </div>
