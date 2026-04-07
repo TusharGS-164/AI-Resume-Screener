@@ -20,9 +20,9 @@ def verify_password(plain: str, hashed: str) -> bool:
     return pwd_context.verify(plain, hashed)
 
 
-def hash_password(password: str) -> str:
+def hash_password(password: str):
+    password = password[:72]  # 🔥 FIX
     return pwd_context.hash(password)
-
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
     to_encode = data.copy()
