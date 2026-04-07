@@ -74,9 +74,7 @@ export default function RegisterPage() {
           </div>
 
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 28, color: 'var(--text)', marginBottom: 6 }}>Create account</h1>
-          <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: '2rem' }}>
-            First registered user becomes admin
-          </p>
+        
 
           {error && (
             <div style={{ padding: '10px 14px', background: 'var(--red-bg)', border: '1px solid var(--red-border)', borderRadius: 'var(--radius)', color: 'var(--red)', fontSize: 13, marginBottom: '1.25rem' }}>
