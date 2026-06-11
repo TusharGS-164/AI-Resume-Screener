@@ -5,9 +5,8 @@ from datetime import datetime
 import os
 
 
-DATABASE_URL = "postgresql+psycopg2://postgres:162004@localhost:5432/resume_screener"
 
-print("DATABASE_URL =", DATABASE_URL)
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 engine = create_engine(DATABASE_URL)
 
@@ -18,7 +17,6 @@ SessionLocal = sessionmaker(
 )
 
 Base = declarative_base()
-
 
 class User(Base):
     __tablename__ = "users"
