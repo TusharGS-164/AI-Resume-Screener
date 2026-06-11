@@ -32,7 +32,7 @@ def register(req: RegisterRequest, db: Session = Depends(get_db)):
         email=req.email,
         name=req.name,
         hashed_password=hash_password(req.password),
-        is_admin=db.query(User).count() == 0  # first user is admin
+        is_admin=db.query(User).count() == 0  
     )
     db.add(user)
     db.commit()

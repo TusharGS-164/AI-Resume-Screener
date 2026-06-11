@@ -405,12 +405,32 @@ const res = await API.get(`/api/screen/sessions/${id}?${params}`);
 
   useEffect(() => { fetchSession() }, [fetchSession])
 
-  const handleStageChange = (candidateId, newStage) => {
-    setSession(s => ({
-      ...s,
-      candidates: s.candidates.map(c => c.id === candidateId ? { ...c, stage: newStage } : c)
-    }))
-  }
+ const handleStageChange = (candidateId, newStage) => {
+  setSession(prev => {
+    const candidate = prev.candidates.find(c => c.id === candidateId);
+
+    if (!candidate) return prev;
+
+    const oldStage = candidate.stage;
+
+    return {
+      ...prev,
+      candidates: prev.candidates.map(c =>
+        c.id === candidateId
+          ? { ...c, stage: newStage }
+          : c
+      ),
+      stage_counts: {
+        ...prev.stage_counts,
+        [oldStage]: Math.max(
+          (prev.stage_counts?.[oldStage] || 0) - 1,
+          0
+        ),
+        [newStage]: (prev.stage_counts?.[newStage] || 0) + 1
+      }
+    };
+  });
+};
 
   const exportFile = async type => {
     const res = await API.get(`/api/screen/sessions/${id}/export/${type}`, { responseType: 'blob' })

@@ -87,7 +87,7 @@ async def create_session(
         is_dup = False
         dup_of = None
         if h:
-            # Check DB for same hash in same session
+            
             existing = db.query(Candidate).filter(
                 Candidate.session_id == session.id,
                 Candidate.content_hash == h

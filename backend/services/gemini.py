@@ -66,7 +66,7 @@ Analyze this resume against the job description. Return ONLY this JSON:
   "blind_summary": ""
 }}"""
 
-    # ✅ Correct API call
+    
     response = client.models.generate_content(
         model="gemini-2.5-flash",
         contents=prompt
