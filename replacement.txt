@@ -1,0 +1,3 @@
+your_gemini_api_key_here==>your_gemini_api_key_here
+your_secret_key_here==>your_secret_key_here
+your_db_url==>your_db_url
